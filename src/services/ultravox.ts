@@ -33,9 +33,13 @@ export async function createCall(language: Language): Promise<CallResponse> {
   }
 
   const data = await response.json();
+  console.log('Call data received:', data);
   return {
     callId: data.callId,
     joinUrl: data.joinUrl,
+    participantToken: data.participantToken,
+    serverUrl: data.serverUrl,
+    roomName: data.roomName,
   };
 }
 
