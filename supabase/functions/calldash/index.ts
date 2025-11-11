@@ -153,6 +153,9 @@ async function handleEnglishAgent() {
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const agentName = 'calldash-agent';
 
+    // Create a server token for API authentication
+    const serverToken = await createServerToken();
+
     // First, create the dispatch to ensure agent will join the room
     const dispatchUrl = `https://pipe-9i8t5pt2.livekit.cloud/twirp/livekit.AgentDispatchService/CreateDispatch`;
 
@@ -164,13 +167,11 @@ async function handleEnglishAgent() {
       }),
     };
 
-    const authHeader = 'Basic ' + btoa(`${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}`);
-
     const dispatchResponse = await fetch(dispatchUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${serverToken}`,
       },
       body: JSON.stringify(dispatchPayload),
     });
@@ -327,6 +328,61 @@ async function createLiveKitToken(
   if (userInfo.attributes) {
     payload.attributes = userInfo.attributes;
   }
+
+  const base64url = (input: Uint8Array): string => {
+    const base64 = btoa(String.fromCharCode(...input));
+    return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  };
+
+  const headerB64 = base64url(encoder.encode(JSON.stringify(header)));
+  const payloadB64 = base64url(encoder.encode(JSON.stringify(payload)));
+  const message = `${headerB64}.${payloadB64}`;
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(LIVEKIT_API_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(message)
+  );
+
+  const signatureB64 = base64url(new Uint8Array(signature));
+
+  return `${message}.${signatureB64}`;
+}
+
+async function createServerToken(): Promise<string> {
+  const encoder = new TextEncoder();
+
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT'
+  };
+
+  const now = Math.floor(Date.now() / 1000);
+  const exp = now + 3600; // 1 hour
+
+  const payload = {
+    exp: exp,
+    iss: LIVEKIT_API_KEY,
+    nbf: now,
+    video: {
+      roomCreate: true,
+      roomList: true,
+      roomRecord: true,
+      roomAdmin: true,
+      room: '*',
+      canPublish: true,
+      canPublishData: true,
+      canSubscribe: true,
+    }
+  };
 
   const base64url = (input: Uint8Array): string => {
     const base64 = btoa(String.fromCharCode(...input));
