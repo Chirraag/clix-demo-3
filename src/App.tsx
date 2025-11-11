@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Headphones, Globe } from 'lucide-react';
-import { createCall, connectWebSocket } from './services/ultravox';
+import { Headphones, Globe, ChevronDown } from 'lucide-react';
+import { createCall, connectWebSocket, Language } from './services/ultravox';
 
 type CallState = 'idle' | 'connecting' | 'connected' | 'disconnected';
 
 function App() {
   const [callState, setCallState] = useState<CallState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [language, setLanguage] = useState<Language>('english');
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -27,7 +28,7 @@ function App() {
       setCallState('connecting');
       setError(null);
 
-      const callData = await createCall();
+      const callData = await createCall(language);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -202,11 +203,20 @@ function App() {
             VOICE DEMO
           </h1>
 
-          {/* Language Display */}
+          {/* Language Selector */}
           <div className="mb-8 sm:mb-12 flex justify-center">
-            <div className="bg-white border border-slate-300 rounded-full px-6 sm:px-8 py-2.5 sm:py-3 shadow-sm flex items-center gap-2.5 sm:gap-3">
-              <Globe size={18} className="text-slate-600 sm:w-5 sm:h-5" />
-              <span className="text-slate-700 font-medium text-sm sm:text-base">Hindi</span>
+            <div className="relative">
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as Language)}
+                disabled={callState !== 'idle'}
+                className="appearance-none bg-white border border-slate-300 rounded-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 shadow-sm text-slate-700 font-medium text-sm sm:text-base cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <option value="english">English</option>
+                <option value="hindi">Hindi</option>
+              </select>
+              <Globe size={18} className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none sm:w-5 sm:h-5" />
+              <ChevronDown size={16} className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none sm:w-4 sm:h-4" />
             </div>
           </div>
 

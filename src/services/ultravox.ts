@@ -1,12 +1,14 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+export type Language = 'hindi' | 'english';
+
 interface CallResponse {
   callId: string;
   joinUrl: string;
 }
 
-export async function createCall(): Promise<CallResponse> {
+export async function createCall(language: Language): Promise<CallResponse> {
   const apiUrl = `${SUPABASE_URL}/functions/v1/calldash`;
 
   const response = await fetch(apiUrl, {
@@ -15,6 +17,7 @@ export async function createCall(): Promise<CallResponse> {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     },
+    body: JSON.stringify({ language }),
   });
 
   if (!response.ok) {
