@@ -4,12 +4,6 @@ const ULTRAVOX_API_KEY = 'e4EbV5aX.t6q7lyOtbphcLZS9zAtSMrrSDR0P2UwQ';
 const API_BASE_URL = 'https://api.ultravox.ai/api';
 
 const SYSTEM_PROMPT = `
-Understood. I will **remove repetitive use of the DSA’s name** and use it **only once at the start**, then switch to **"Sir"** or **second-person references** naturally.
-
-Here is your **cleaned, non-repetitive** final version:
-
----
-
 # 🎙️ **DSA Voice Bot – Hinglish Call Flow (No Name Repetition)**
 
 ### **System Rule (Add to Prompt)**
