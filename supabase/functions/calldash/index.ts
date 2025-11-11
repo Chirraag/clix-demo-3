@@ -154,9 +154,20 @@ async function handleEnglishAgent() {
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const agentName = 'calldash-agent';
 
-    const dispatchUrl = `${LIVEKIT_URL.replace('wss://', 'https://')}/twirp/livekit.AgentDispatchService/CreateDispatch`;
+    const participantToken = createLiveKitToken(
+      {
+        identity: participantIdentity,
+        name: 'User',
+        metadata: JSON.stringify({
+          agent_id: ENGLISH_AGENT_ID,
+        }),
+      },
+      roomName
+    );
+
+    const dispatchUrl = `https://pipe-9i8t5pt2.livekit.cloud/twirp/livekit.AgentDispatchService/CreateDispatch`;
     
-    const dispatchOptions = {
+    const dispatchPayload = {
       room: roomName,
       agent_name: agentName,
       metadata: JSON.stringify({
@@ -166,35 +177,33 @@ async function handleEnglishAgent() {
 
     const authHeader = 'Basic ' + btoa(`${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}`);
 
-    const dispatchResponse = await fetch(dispatchUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-      },
-      body: JSON.stringify(dispatchOptions),
-    });
+    try {
+      const dispatchResponse = await fetch(dispatchUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
+        body: JSON.stringify(dispatchPayload),
+      });
 
-    if (!dispatchResponse.ok) {
-      const errorText = await dispatchResponse.text();
-      console.error('Dispatch failed:', errorText);
+      if (!dispatchResponse.ok) {
+        const errorText = await dispatchResponse.text();
+        console.error('Dispatch failed:', errorText);
+      } else {
+        const dispatchData = await dispatchResponse.json();
+        console.log('Dispatch created:', dispatchData);
+      }
+    } catch (dispatchError) {
+      console.error('Dispatch error:', dispatchError);
     }
-
-    const participantToken = await createLiveKitToken(
-      {
-        identity: participantIdentity,
-        name: 'User',
-        metadata: 'participant-metadata',
-      },
-      roomName
-    );
 
     const data = {
       callId: roomName,
-      joinUrl: `${LIVEKIT_URL}?token=${participantToken}`,
-      participantToken,
+      joinUrl: LIVEKIT_URL,
+      participantToken: participantToken,
       serverUrl: LIVEKIT_URL,
-      roomName,
+      roomName: roomName,
     };
 
     return new Response(
@@ -287,7 +296,7 @@ async function handleHindiAgent() {
 function createLiveKitToken(
   userInfo: { identity: string; name: string; metadata: string },
   roomName: string
-) {
+): string {
   const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
     identity: userInfo.identity,
     name: userInfo.name,
