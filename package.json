@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.15",
     "@supabase/supabase-js": "^2.57.4",
     "livekit-client": "^2.15.15",
     "lucide-react": "^0.344.0",
