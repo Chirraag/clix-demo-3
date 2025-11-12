@@ -79,6 +79,8 @@ function App() {
       disconnectHindi();
     }
     setConnectionDetails(undefined);
+    setIsConnecting(false);
+    setHasError(false);
   }, [language, disconnectHindi]);
 
   const initiateConnection = useCallback(async () => {
@@ -98,6 +100,7 @@ function App() {
           serverUrl: callData.serverUrl,
           roomName: callData.roomName,
         });
+        setIsConnecting(false);
       } else {
         setConnectionDetails({
           joinUrl: callData.joinUrl,
