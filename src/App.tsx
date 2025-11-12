@@ -27,6 +27,40 @@ function App() {
   const audioQueueRef = useRef<AudioBufferSourceNode[]>([]);
   const nextPlayTimeRef = useRef<number>(0);
 
+  const disconnectHindi = useCallback(() => {
+    audioQueueRef.current.forEach(source => {
+      try {
+        source.stop();
+      } catch (e) {
+        // Already stopped
+      }
+    });
+    audioQueueRef.current = [];
+    nextPlayTimeRef.current = 0;
+
+    if (audioWorkletRef.current) {
+      audioWorkletRef.current.disconnect();
+      audioWorkletRef.current = null;
+    }
+
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    setHindiCallState('idle');
+  }, []);
+
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
@@ -38,12 +72,14 @@ function App() {
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
       disconnectHindi();
     };
-  }, []);
+  }, [disconnectHindi]);
 
   const handleEndCall = useCallback(() => {
+    if (language === 'hindi') {
+      disconnectHindi();
+    }
     setConnectionDetails(undefined);
-    disconnectHindi();
-  }, []);
+  }, [language, disconnectHindi]);
 
   const initiateConnection = useCallback(async () => {
     if (isConnecting || connectionDetails) {
@@ -184,40 +220,6 @@ function App() {
     };
 
     audioQueueRef.current.push(source);
-  };
-
-  const disconnectHindi = () => {
-    audioQueueRef.current.forEach(source => {
-      try {
-        source.stop();
-      } catch (e) {
-        // Already stopped
-      }
-    });
-    audioQueueRef.current = [];
-    nextPlayTimeRef.current = 0;
-
-    if (audioWorkletRef.current) {
-      audioWorkletRef.current.disconnect();
-      audioWorkletRef.current = null;
-    }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-      mediaStreamRef.current = null;
-    }
-
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    setHindiCallState('idle');
   };
 
   const onDeviceFailure = (error?: MediaDeviceFailure) => {
