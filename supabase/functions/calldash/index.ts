@@ -7,7 +7,7 @@ const HINDI_AGENT_ID = 'ad69ddb2-363f-4279-adf4-5961f127ec2f';
 
 const LIVEKIT_API_KEY = 'APIrnvUvfrWt8E6';
 const LIVEKIT_API_SECRET = '1GszXTXxjfCqAm9emwPeDvsdYZ6mVmudLpvoMLNHjrrA';
-const LIVEKIT_URL = 'wss://pipe-9i8t5pt2.livekit.cloud';
+const LIVEKIT_API_SECRET = 'wss://pipe-9i8t5pt2.livekit.cloud';
 const LIVEKIT_HTTP_URL = 'https://pipe-9i8t5pt2.livekit.cloud';
 const ENGLISH_AGENT_ID = '1fzxSZCTgdiUk9R5ly151';
 
