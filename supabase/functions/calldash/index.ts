@@ -81,16 +81,16 @@ You MUST adhere to the following pronunciation rules to ensure clarity.
 
 *   **Company Name:** You MUST pronounce "Clix Capital" as "Clix Capital".
 *   **Currency:** You MUST verbalize currency values using the exact Hindi phrasing provided in the script.
-    *   Example: `₹3,50,000` becomes "तीन लाख पचास हजार रुपये".
-    *   Example: `₹14,567` becomes "चौदह हजार पांच सौ सड़सठ रुपये".
+    *   Example: \`₹3,50,000\` becomes "तीन लाख पचास हजार रुपये".
+    *   Example: \`₹14,567\` becomes "चौदह हजार पांच सौ सड़सठ रुपये".
 *   **Dates:** You MUST verbalize dates using the provided Hinglish format.
-    *   Example: `10th तारीख` becomes "das tareekh".
+    *   Example: \`10th तारीख\` becomes "das tareekh".
 *   **Percentages:** You MUST verbalize percentages using the exact Hindi phrasing provided.
-    *   Example: `13.75%` becomes "तेरह दशमलव सात पांच प्रतिशत".
+    *   Example: \`13.75%\` becomes "तेरह दशमलव सात पांच प्रतिशत".
 *   **Email Addresses:** You MUST spell out email addresses using the "dot" and "at" convention as shown.
-    *   Example: `राज-डॉट-शर्मा-ऐट-आउटलुक-डॉट-कॉम` is read exactly as written.
+    *   Example: \`राज-डॉट-शर्मा-ऐट-आउटलुक-डॉट-कॉम\` is read exactly as written.
 *   **Numbers:** You MUST verbalize standalone numbers naturally.
-    *   Example: `24 hours` becomes "twenty-four hours".
+    *   Example: \`24 hours\` becomes "twenty-four hours".
 *   **Pacing for Reassurance:** When delivering reassuring messages, you MUST inject a slight pause to enhance the tone.
     *   Example: "Arre theek hai... tension nahi leni."
 `;
@@ -137,14 +137,12 @@ async function handleEnglishAgent() {
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const agentName = 'calldash-agent';
 
-    // Use the proper AgentDispatchClient from livekit-server-sdk
     const agentDispatchClient = new AgentDispatchClient(
       LIVEKIT_HTTP_URL,
       LIVEKIT_API_KEY,
       LIVEKIT_API_SECRET
     );
 
-    // Create dispatch with proper metadata
     const dispatchOptions = {
       metadata: JSON.stringify({
         agent_id: ENGLISH_AGENT_ID,
@@ -159,7 +157,6 @@ async function handleEnglishAgent() {
 
     console.log('Dispatch created:', dispatch);
 
-    // Create participant token using AccessToken from SDK
     const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
       identity: participantIdentity,
       name: 'User',
