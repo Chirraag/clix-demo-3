@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { AgentDispatchClient, AccessToken } from "npm:livekit-server-sdk@2.9.0";
 
 const ULTRAVOX_API_KEY = 'e4EbV5aX.t6q7lyOtbphcLZS9zAtSMrrSDR0P2UwQ';
 const ULTRAVOX_API_BASE_URL = 'https://api.ultravox.ai/api';
@@ -7,6 +8,7 @@ const HINDI_AGENT_ID = 'ad69ddb2-363f-4279-adf4-5961f127ec2f';
 const LIVEKIT_API_KEY = 'APIrnvUvfrWt8E6';
 const LIVEKIT_API_SECRET = '1GszXTXxjfCqAm9emwPeDvsdYZ6mVmudLpvoMLNHjrrA';
 const LIVEKIT_URL = 'wss://pipe-9i8t5pt2.livekit.cloud';
+const LIVEKIT_HTTP_URL = 'https://pipe-9i8t5pt2.livekit.cloud';
 const ENGLISH_AGENT_ID = '1fzxSZCTgdiUk9R5ly151';
 
 const HINDI_SYSTEM_PROMPT = `
@@ -153,50 +155,45 @@ async function handleEnglishAgent() {
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const agentName = 'calldash-agent';
 
-    // Create a server token for API authentication
-    const serverToken = await createServerToken();
+    // Use the proper AgentDispatchClient from livekit-server-sdk
+    const agentDispatchClient = new AgentDispatchClient(
+      LIVEKIT_HTTP_URL,
+      LIVEKIT_API_KEY,
+      LIVEKIT_API_SECRET
+    );
 
-    // First, create the dispatch to ensure agent will join the room
-    const dispatchUrl = `https://pipe-9i8t5pt2.livekit.cloud/twirp/livekit.AgentDispatchService/CreateDispatch`;
-
-    const dispatchPayload = {
-      room: roomName,
-      agent_name: agentName,
+    // Create dispatch with proper metadata
+    const dispatchOptions = {
       metadata: JSON.stringify({
         agent_id: ENGLISH_AGENT_ID,
       }),
     };
 
-    const dispatchResponse = await fetch(dispatchUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${serverToken}`,
-      },
-      body: JSON.stringify(dispatchPayload),
+    const dispatch = await agentDispatchClient.createDispatch(
+      roomName,
+      agentName,
+      dispatchOptions
+    );
+
+    console.log('Dispatch created:', dispatch);
+
+    // Create participant token using AccessToken from SDK
+    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+      identity: participantIdentity,
+      name: 'User',
+      metadata: 'user-metadata',
+      ttl: '15m',
     });
 
-    if (!dispatchResponse.ok) {
-      const errorText = await dispatchResponse.text();
-      console.error('Dispatch failed:', errorText);
-      throw new Error(`Failed to dispatch agent: ${errorText}`);
-    }
+    at.addGrant({
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canPublishData: true,
+      canSubscribe: true,
+    });
 
-    const dispatchData = await dispatchResponse.json();
-    console.log('Dispatch created:', dispatchData);
-
-    // Now create the participant token
-    const participantToken = await createLiveKitToken(
-      {
-        identity: participantIdentity,
-        name: 'User',
-        metadata: 'user-metadata',
-        attributes: {
-          agentId: ENGLISH_AGENT_ID,
-        },
-      },
-      roomName
-    );
+    const participantToken = await at.toJwt();
 
     const data = {
       serverUrl: LIVEKIT_URL,
@@ -292,120 +289,4 @@ async function handleHindiAgent() {
       }
     );
   }
-}
-
-async function createLiveKitToken(
-  userInfo: { identity: string; name: string; metadata: string; attributes?: Record<string, string> },
-  roomName: string
-): Promise<string> {
-  const encoder = new TextEncoder();
-
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT'
-  };
-
-  const now = Math.floor(Date.now() / 1000);
-  const exp = now + 900; // 15 minutes
-
-  const payload: any = {
-    exp: exp,
-    iss: LIVEKIT_API_KEY,
-    nbf: now,
-    sub: userInfo.identity,
-    name: userInfo.name,
-    metadata: userInfo.metadata,
-    video: {
-      room: roomName,
-      roomJoin: true,
-      canPublish: true,
-      canPublishData: true,
-      canSubscribe: true,
-    }
-  };
-
-  // Add attributes if provided (like the reference code)
-  if (userInfo.attributes) {
-    payload.attributes = userInfo.attributes;
-  }
-
-  const base64url = (input: Uint8Array): string => {
-    const base64 = btoa(String.fromCharCode(...input));
-    return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  };
-
-  const headerB64 = base64url(encoder.encode(JSON.stringify(header)));
-  const payloadB64 = base64url(encoder.encode(JSON.stringify(payload)));
-  const message = `${headerB64}.${payloadB64}`;
-
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(LIVEKIT_API_SECRET),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-
-  const signature = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(message)
-  );
-
-  const signatureB64 = base64url(new Uint8Array(signature));
-
-  return `${message}.${signatureB64}`;
-}
-
-async function createServerToken(): Promise<string> {
-  const encoder = new TextEncoder();
-
-  const header = {
-    alg: 'HS256',
-    typ: 'JWT'
-  };
-
-  const now = Math.floor(Date.now() / 1000);
-  const exp = now + 3600; // 1 hour
-
-  const payload = {
-    exp: exp,
-    iss: LIVEKIT_API_KEY,
-    nbf: now,
-    sub: LIVEKIT_API_KEY,  // Add subject claim - required for server tokens
-    video: {
-      roomCreate: true,
-      roomList: true,
-      roomRecord: true,
-      roomAdmin: true,
-      room: '*',
-    }
-  };
-
-  const base64url = (input: Uint8Array): string => {
-    const base64 = btoa(String.fromCharCode(...input));
-    return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  };
-
-  const headerB64 = base64url(encoder.encode(JSON.stringify(header)));
-  const payloadB64 = base64url(encoder.encode(JSON.stringify(payload)));
-  const message = `${headerB64}.${payloadB64}`;
-
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(LIVEKIT_API_SECRET),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-
-  const signature = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(message)
-  );
-
-  const signatureB64 = base64url(new Uint8Array(signature));
-
-  return `${message}.${signatureB64}`;
 }
