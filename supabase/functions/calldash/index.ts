@@ -1,15 +1,15 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { AgentDispatchClient, AccessToken } from "npm:livekit-server-sdk@2.9.0";
 
-const ULTRAVOX_API_KEY = 'e4EbV5aX.t6q7lyOtbphcLZS9zAtSMrrSDR0P2UwQ';
+const ULTRAVOX_API_KEY = Deno.env.get('ULTRAVOX_API_KEY') || 'e4EbV5aX.t6q7lyOtbphcLZS9zAtSMrrSDR0P2UwQ';
 const ULTRAVOX_API_BASE_URL = 'https://api.ultravox.ai/api';
-const HINDI_AGENT_ID = 'ad69ddb2-363f-4279-adf4-5961f127ec2f';
+const HINDI_AGENT_ID = Deno.env.get('HINDI_AGENT_ID') || 'ad69ddb2-363f-4279-adf4-5961f127ec2f';
 
-const LIVEKIT_API_KEY = 'APIrnvUvfrWt8E6';
-const LIVEKIT_API_SECRET = '1GszXTXxjfCqAm9emwPeDvsdYZ6mVmudLpvoMLNHjrrA';
-const LIVEKIT_API_SECRET = 'wss://pipe-9i8t5pt2.livekit.cloud';
-const LIVEKIT_HTTP_URL = 'https://pipe-9i8t5pt2.livekit.cloud';
-const ENGLISH_AGENT_ID = '1fzxSZCTgdiUk9R5ly151';
+const LIVEKIT_API_KEY = Deno.env.get('LIVEKIT_API_KEY') || '';
+const LIVEKIT_API_SECRET = Deno.env.get('LIVEKIT_API_SECRET') || '';
+const LIVEKIT_URL = Deno.env.get('LIVEKIT_URL') || 'wss://pipe-9i8t5pt2.livekit.cloud';
+const LIVEKIT_HTTP_URL = Deno.env.get('LIVEKIT_URL')?.replace('wss://', 'https://') || 'https://pipe-9i8t5pt2.livekit.cloud';
+const ENGLISH_AGENT_ID = Deno.env.get('ENGLISH_AGENT_ID') || '1fzxSZCTgdiUk9R5ly151';
 
 const HINDI_SYSTEM_PROMPT = `
 ### **1. Opening & Verification**
