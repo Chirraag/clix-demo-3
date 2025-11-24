@@ -12,7 +12,7 @@ interface CallResponse {
 }
 
 export async function createCall(language: Language): Promise<CallResponse> {
-  const apiUrl = `${SUPABASE_URL}/functions/v1/calldash`;
+  const apiUrl = `${SUPABASE_URL}/functions/v1/call-handler`;
 
   const response = await fetch(apiUrl, {
     method: 'POST',
