@@ -1,5 +1,4 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export type Language = 'hindi' | 'english';
 
@@ -12,13 +11,12 @@ interface CallResponse {
 }
 
 export async function createCall(language: Language): Promise<CallResponse> {
-  const apiUrl = `${SUPABASE_URL}/functions/v1/call-handler`;
+  const apiUrl = `${API_URL}/api/create-call`;
 
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     },
     body: JSON.stringify({ language }),
   });
